@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Correo Electrónico</title>
+</head>
+<body>
+<h2 th:text="'Hola, ' + ${nombreDestinatario} + '!'"></h2>
+
+<p th:text="${cuerpoMensaje}"></p>
+
+<p>Saludos,</p>
+<p th:text="${nombreRemitente}"></p>
+</body>
+</html>

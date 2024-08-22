@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Añadir</title>
+    <link rel="stylesheet"
+          href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+          integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"
+          crossorigin="anonymous">
+</head>
+<body>
+<div>
+    <nav class="navbar navbar-expand-md bg-dark navbar-dark">
+
+        <a class="navbar-brand" href="#">Añadir Calificacion</a>
+
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#collapsibleNavbar">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+    </nav>
+    <form action="#" th:action="@{/calificacion/saveCalificacion}" th:object="${CalificacionDTO}" method="POST">
+        <table class="table table-striped table-bordered">
+            <tr>
+                <td><label>Alumno</label></td>
+                <td>
+                    <select th:field="*{idAlumno}" name="alumnos">
+                        <option th:each="alumno :${alumnos}" th:value="${alumno.id}" th:text="${alumno.nombre}">
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td><label>Asignatura</label></td>
+                <td>
+                    <select th:field="*{idAsignatura}" name="alumnos">
+                        <option th:each="asignatura :${asignaturas}" th:value="${asignatura.id}" th:text="${asignatura.nombreAsignatura}">
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td><label>Nota</label></td>
+                <td><input type="number" th:field="*{mark}"></td>
+            </tr>
+        </table>
+        <div class="row">
+            <div class="mx-auto">
+                <input type="submit" value="Submit" class="btn btn-primary">
+                <a class="btn btn-danger" href="/calificacion/calificacionMain">Volver</a>
+            </div>
+        </div>
+    </form>
+</div>
+</body>
+</html>

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Editar</title>
+    <link rel="stylesheet"
+          href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+          integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"
+          crossorigin="anonymous">
+</head>
+<body>
+<div>
+    <nav class="navbar navbar-expand-md bg-dark navbar-dark">
+
+        <a class="navbar-brand" href="#">Editar Asignatura</a>
+
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#collapsibleNavbar">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+    </nav>
+    <form action="#" th:action="@{/asignatura/updateAsignatura/{id}(id = *{id})}" th:object="${AsignaturaDTO}" method="POST">
+        <table class="table table-striped table-bordered">
+            <tr>
+                <td><label>Nombre</label></td>
+                <td><input type="text" th:field="*{nombreAsignatura}"></td>
+            </tr>
+            <tr>
+                <td><label>Profesor</label></td>
+                <td>
+                    <select th:field="*{idProfesor}" name="profesores">
+                        <option th:each="profesor :${profesores}" th:value="${profesor.id}" th:text="${profesor.nombre}">
+                    </select>
+                </td>
+            </tr>
+        </table>
+        <div class="row">
+            <div class="mx-auto">
+                <input type="submit" value="Submit" class="btn btn-primary">
+                <a class="btn btn-danger" href="/asignatura/asignaturaMain">Volver</a>
+            </div>
+        </div>
+
+    </form>
+</div>
+</body>
+</html>
