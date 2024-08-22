@@ -168,7 +168,7 @@ public class UploadFileService {
                 if (row == null) continue;
                 calificacion = new Calificacion();
                 calificacion.setMark(Float.parseFloat(getCellValue(row,indices,"Nota")));
-                var asig = asignaturasRepository.findByNombre(getCellValue(row,indices,"NombreAsignatura"));
+                var asig = asignaturasRepository.findByName(getCellValue(row,indices,"NombreAsignatura"));
                 if (asig.isPresent()){
                     calificacion.setIdAsignatura(asig.get());
                 }else{
