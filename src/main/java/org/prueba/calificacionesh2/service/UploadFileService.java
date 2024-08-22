@@ -5,7 +5,10 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.prueba.calificacionesh2.dto.AlumnoDTO;
 import org.prueba.calificacionesh2.dto.AsignaturaDTO;
 import org.prueba.calificacionesh2.dto.ProfesorDTO;
+import org.prueba.calificacionesh2.entity.Calificacion;
 import org.prueba.calificacionesh2.repository.AlumnoRepository;
+import org.prueba.calificacionesh2.repository.AsignaturasRepository;
+import org.prueba.calificacionesh2.repository.CalificacionesRepository;
 import org.prueba.calificacionesh2.repository.ProfesorRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -26,6 +29,12 @@ public class UploadFileService {
     private ProfesorRepository profesorRepository;
     @Autowired
     private AsignaturasService asignaturasService;
+    @Autowired
+    private CalificacionesRepository calificacionesRepository;
+    @Autowired
+    private AsignaturasRepository asignaturasRepository;
+    @Autowired
+    private AlumnoRepository alumnoRepository;
 
     public void uploadAlumno(MultipartFile file){
 
@@ -135,6 +144,47 @@ public class UploadFileService {
                 asignaturasService.addAsignatura(asignatura);
             }
         } catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+
+
+    public void uploadCalificaciones(MultipartFile file){
+
+        try(InputStream is = file.getInputStream(); Workbook workbook = new XSSFWorkbook(is)) {
+            Sheet sheet = workbook.getSheet("Calificaciones");
+            if (sheet == null) {
+                throw new RuntimeException("La hoja 'Calificaciones' no existe en el fichero");
+            }
+
+            Map<String, Integer> indices = new HashMap<>();
+            Row header = sheet.getRow(0);
+            header.forEach(cell -> indices.put(cell.getStringCellValue(),cell.getColumnIndex()));
+
+            Calificacion calificacion;
+            Row row;
+            for (int i = 1; i <= sheet.getLastRowNum(); i++) {
+                row = sheet.getRow(i);
+                if (row == null) continue;
+                calificacion = new Calificacion();
+                calificacion.setMark(Float.parseFloat(getCellValue(row,indices,"Nota")));
+                var asig = asignaturasRepository.findByNombre(getCellValue(row,indices,"NombreAsignatura"));
+                if (asig.isPresent()){
+                    calificacion.setIdAsignatura(asig.get());
+                }else{
+                    throw new RuntimeException("La asignatura no existe en el fichero");
+                }
+                var alum = alumnoRepository.findByNombre(getCellValue(row,indices,"NombreAlumno"));
+                if (alum.isPresent()){
+                    calificacion.setIdAlumno(alum.get());
+                }else {
+                    throw new RuntimeException("El alumno no existe en el fichero");
+                }
+
+                calificacionesRepository.save(calificacion);
+            }
+
+        }catch (Exception e){
             e.printStackTrace();
         }
     }
