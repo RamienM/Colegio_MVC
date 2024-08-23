@@ -80,83 +80,110 @@ public class UploadFileService {
             if (profesor.isPresent()){
                 asignatura.setIdProfesor(profesor.get());
             }else {
-                //Si no existe el profesor lo añade
-                List<Row> datosProfesor = findDatosByColunm("Profesores","Nombre",nombreProfesor,file);
-                if (datosProfesor.size() == 2){
-                    Map<String, Integer> indicesP = new HashMap<>();
-                    datosProfesor.get(0).forEach(cell -> indicesP.put(cell.getStringCellValue(),cell.getColumnIndex()));
+                obtainAllDataFromASheet(file,"Profesores", (rowP,indicesP) -> {
+                    if (nombreProfesor.equals(getCellValue(rowP,indicesP,"Nombre"))) {
+                        Profesor prof = new Profesor();
+                        prof.setNombre(getCellValue(rowP,indicesP,"Nombre"));
+                        prof.setApellido(getCellValue(rowP,indicesP, "Apellido"));
+                        prof.setCorreo(getCellValue(rowP,indicesP, "Correo"));
+                        prof.setTelefono(getCellValue(rowP,indicesP, "Telefono"));
 
-                    var prof = new Profesor();
-                    prof.setNombre(getCellValue(datosProfesor.get(1),indicesP,"Nombre"));
-                    prof.setApellido(getCellValue(datosProfesor.get(1),indicesP,"Apellido"));
-                    prof.setCorreo(getCellValue(datosProfesor.get(1),indicesP,"Correo"));
-                    prof.setTelefono(getCellValue(datosProfesor.get(1),indicesP,"Telefono"));
+                        profesorRepository.save(prof);
+                    }
+                });
 
-                    prof = profesorRepository.save(prof);
-                    asignatura.setIdProfesor(prof);
-                }else{
-                    throw new RuntimeException("No se ha encontrado el profesor");
+                profesor = profesorRepository.findByNombre(nombreProfesor);
+                if (profesor.isPresent()) {
+                    asignatura.setIdProfesor(profesor.get());
+                }else {
+                    throw new RuntimeException("No existe un profesor con ese nombre");
                 }
             }
             asignaturasRepository.save(asignatura);
         });
     }
 
-
+    /**
+     * Permite añadir a la base de datos Calificaciones a patir de un archivo Excel, también añade las asignaturas y
+     * alumnos
+     * @param file  Archivo exel que debe contener la hoja "Asignaturas" y en caso de ser necesario "Profesores"
+     */
     public void uploadCalificaciones(MultipartFile file){
         obtainAllDataFromASheet(file, "Calificaciones", (row, indices) -> {
             Calificacion calificacion = new Calificacion();
             calificacion.setMark(Float.parseFloat(getCellValue(row,indices,"Nota")));
 
-            var asig = asignaturasRepository.findByName(getCellValue(row,indices,"NombreAsignatura"));
+            String nombreAsignatura = getCellValue(row,indices,"NombreAsignatura");
+            var asig = asignaturasRepository.findByName(nombreAsignatura);
             if (asig.isPresent()){
                 calificacion.setIdAsignatura(asig.get());
             }else{
-                throw new RuntimeException("La asignatura no existe en el fichero");
+                obtainAllDataFromASheet(file, "Asignaturas", (rowA, indicesA) -> {
+                    if (nombreAsignatura.equals(getCellValue(rowA,indicesA,"NombreAsignatura"))) {
+                        Asignatura asignatura = new Asignatura();
+                        asignatura.setName(getCellValue(rowA,indicesA,"NombreAsignatura"));
+
+                        var nombreProfesor = getCellValue(rowA,indicesA,"NombreProfesor");
+                        var profesor = profesorRepository.findByNombre(nombreProfesor);
+
+                        if (profesor.isPresent()){
+                            asignatura.setIdProfesor(profesor.get());
+                        }else {
+                            obtainAllDataFromASheet(file,"Profesores", (rowP,indicesP) -> {
+                                if (nombreProfesor.equals(getCellValue(rowP,indicesP,"Nombre"))) {
+                                    Profesor prof = new Profesor();
+                                    prof.setNombre(getCellValue(rowP,indicesP,"Nombre"));
+                                    prof.setApellido(getCellValue(rowP,indicesP, "Apellido"));
+                                    prof.setCorreo(getCellValue(rowP,indicesP, "Correo"));
+                                    prof.setTelefono(getCellValue(rowP,indicesP, "Telefono"));
+
+                                    profesorRepository.save(prof);
+                                }
+                            });
+
+                            profesor = profesorRepository.findByNombre(nombreProfesor);
+                            if (profesor.isPresent()) {
+                                asignatura.setIdProfesor(profesor.get());
+                            }else {
+                                throw new RuntimeException("No existe un profesor con ese nombre");
+                            }
+                        }
+                        asignaturasRepository.save(asignatura);
+                    }
+                });
+                asig = asignaturasRepository.findByName(nombreAsignatura);
+                if (asig.isPresent()){
+                    calificacion.setIdAsignatura(asig.get());
+                }else{
+                    throw new RuntimeException("No existe un asignatura con ese nombre");
+                }
             }
-            var alum = alumnoRepository.findByNombre(getCellValue(row,indices,"NombreAlumno"));
+            String nombreAlumno = getCellValue(row,indices,"NombreAlumno");
+            var alum = alumnoRepository.findByNombre(nombreAlumno);
             if (alum.isPresent()){
                 calificacion.setIdAlumno(alum.get());
             }else {
-                throw new RuntimeException("El alumno no existe en el fichero");
+                obtainAllDataFromASheet(file,"Alumnos", (rowA,indicesA) -> {
+                    if (nombreAlumno.equals(getCellValue(rowA,indicesA,"Nombre"))) {
+                        Alumno alumno = new Alumno();
+                        alumno.setNombre(getCellValue(rowA,indicesA,"Nombre"));
+                        alumno.setApellido(getCellValue(rowA,indicesA, "Apellido"));
+                        alumno.setCorreo(getCellValue(rowA,indicesA, "Correo"));
+                        alumno.setTelefono(getCellValue(rowA,indicesA, "Telefono"));
+
+                        alumnoRepository.save(alumno);
+                    }
+                });
+                alum = alumnoRepository.findByNombre(nombreAlumno);
+                if (alum.isPresent()){
+                    calificacion.setIdAlumno(alum.get());
+                }else {
+                    throw new RuntimeException("No existe un alumno con ese nombre");
+                }
             }
 
             calificacionesRepository.save(calificacion);
         });
-    }
-
-    /**
-     * Permite buscar, si existe, un dato en una columna especifica de una hoja concreta en un excel.
-     * @param hoja              Hoja donde de debe buscar la columna
-     * @param nombreColumna     Columna donde se espera encontrar el dato
-     * @param datoAComparar     Dato que deseamos buscar
-     * @param file              Fichero Excel
-     * @return  Devuelve un ArrayList que contiene tanto la fila de las columnas como la fila donde se ha encontrado el atributo
-     */
-    private List<Row> findDatosByColunm(String hoja, String nombreColumna, String datoAComparar, MultipartFile file){
-        ArrayList<Row> datos = new ArrayList<>();
-        try(InputStream is = file.getInputStream(); Workbook workbook = new XSSFWorkbook(is)) {
-            Sheet sheet = workbook.getSheet(hoja);
-            if (sheet == null) {
-                throw new RuntimeException("La hoja " + hoja + " no existe en el fichero");
-            }
-
-            Map<String, Integer> indices = new HashMap<>();
-            Row header = sheet.getRow(0);
-            datos.add(header);
-            header.forEach(cell -> indices.put(cell.getStringCellValue(), cell.getColumnIndex()));
-
-            for (Row row : sheet) {
-                if (row == null) continue;
-                if (row.getCell(indices.get(nombreColumna)).getStringCellValue().equals(datoAComparar)){
-                    datos.add(row);
-                    return datos;
-                }
-            }
-        }catch (Exception e){
-            System.err.println("Error en la lectura del fichero");
-        }
-        return datos;
     }
 
     private String getCellValue(Row row, Map<String, Integer> columnIndices, String columnName) {
@@ -221,4 +248,5 @@ public class UploadFileService {
             System.err.println("Error en la lectura del archivo");
         }
     }
+
 }
