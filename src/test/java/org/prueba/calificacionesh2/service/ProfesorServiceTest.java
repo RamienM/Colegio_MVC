@@ -8,10 +8,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.prueba.calificacionesh2.dto.ProfesorDTO;
-import org.prueba.calificacionesh2.entity.Profesor;
-import org.prueba.calificacionesh2.exception.ProfesorNotFoundException;
-import org.prueba.calificacionesh2.repository.ProfesorRepository;
+import org.prueba.calificacionesh2.business.dto.ProfesorDTO;
+import org.prueba.calificacionesh2.business.service.ProfesorService;
+import org.prueba.calificacionesh2.persistence.entity.Profesor;
+import org.prueba.calificacionesh2.business.exception.ProfesorNotFoundException;
+import org.prueba.calificacionesh2.persistence.repository.ProfesorRepository;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 
 import java.util.ArrayList;
@@ -41,14 +42,14 @@ public class ProfesorServiceTest {
         var profesor = new Profesor();
         var profesorDTO = new ProfesorDTO(profesor);
 
-        when(profesorRepository.save(profesor)).thenReturn(profesor);
+        when(profesorRepository.save(any(Profesor.class))).thenReturn(profesor);
 
         //Act
         var response = profesorService.addProfesor(profesorDTO);
 
         //Assert
         assertThat(profesorDTO).isEqualTo(response);
-        verify(profesorRepository, times(1)).save(profesor);
+        verify(profesorRepository, times(1)).save(any(Profesor.class));
     }
 
     @Test

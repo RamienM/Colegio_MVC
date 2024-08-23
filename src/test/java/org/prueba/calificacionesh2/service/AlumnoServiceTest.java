@@ -8,10 +8,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.prueba.calificacionesh2.dto.AlumnoDTO;
-import org.prueba.calificacionesh2.entity.Alumno;
-import org.prueba.calificacionesh2.exception.AlumnoNotFoundException;
-import org.prueba.calificacionesh2.repository.AlumnoRepository;
+import org.prueba.calificacionesh2.business.dto.AlumnoDTO;
+import org.prueba.calificacionesh2.business.service.AlumnoService;
+import org.prueba.calificacionesh2.persistence.entity.Alumno;
+import org.prueba.calificacionesh2.business.exception.AlumnoNotFoundException;
+import org.prueba.calificacionesh2.persistence.repository.AlumnoRepository;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 
 import java.util.ArrayList;
