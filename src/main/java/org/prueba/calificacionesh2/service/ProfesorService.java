@@ -3,7 +3,6 @@ package org.prueba.calificacionesh2.service;
 import org.prueba.calificacionesh2.dto.ProfesorDTO;
 import org.prueba.calificacionesh2.entity.Profesor;
 import org.prueba.calificacionesh2.exception.ProfesorNotFoundException;
-import org.prueba.calificacionesh2.repository.AsignaturasRepository;
 import org.prueba.calificacionesh2.repository.ProfesorRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -15,8 +14,6 @@ import java.util.List;
 public class ProfesorService {
     @Autowired
     private ProfesorRepository profesorRepository;
-    @Autowired
-    private AsignaturasRepository asignaturasRepository;
 
     public List<ProfesorDTO> getAllProfesores() {
         var profesores = new ArrayList<ProfesorDTO>();

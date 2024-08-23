@@ -17,32 +17,26 @@ public class EmailService {
     @Autowired
     private JavaMailSender mailSender;
 
-    public void sendEmail(String to, String subject, String nombreDestinatario, String cuerpoMensaje, String nombreRemitente){
-        try {
-            // Crear un MimeMessage
-            MimeMessage mimeMessage = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, "utf-8");
+    public void sendEmail(String to, String subject, String nombreDestinatario, String cuerpoMensaje, String nombreRemitente) throws MessagingException{
+        // Crear un MimeMessage
+        MimeMessage mimeMessage = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, "utf-8");
 
-            // Configurar destinatario, asunto y remitente
-            helper.setTo(to);
-            helper.setSubject(subject);
+        // Configurar destinatario, asunto y remitente
+        helper.setTo(to);
+        helper.setSubject(subject);
 
-            // Crear contexto de Thymeleaf
-            Context context = new Context();
-            context.setVariable("nombreDestinatario", nombreDestinatario);
-            context.setVariable("cuerpoMensaje", cuerpoMensaje);
-            context.setVariable("nombreRemitente", nombreRemitente);
+        // Crear contexto de Thymeleaf
+        Context context = new Context();
+        context.setVariable("nombreDestinatario", nombreDestinatario);
+        context.setVariable("cuerpoMensaje", cuerpoMensaje);
+        context.setVariable("nombreRemitente", nombreRemitente);
 
-            // Procesar la plantilla Thymeleaf
-            String htmlContent = templateEngine.process("/email/email.html", context);
-            helper.setText(htmlContent, true); // true indica que es HTML
+        // Procesar la plantilla Thymeleaf
+        String htmlContent = templateEngine.process("/email/email.html", context);
+        helper.setText(htmlContent, true); // true indica que es HTML
 
-            // Enviar el correo
-            mailSender.send(mimeMessage);
-        }catch (MessagingException e){
-            System.out.println("Imposible mandar correo, se ha producido un error. Es posible que el correo o contraseña " +
-                    "de aplicación no estén bien añadidos o no este en uso");
-        }
-
+        // Enviar el correo
+        mailSender.send(mimeMessage);
     }
 }

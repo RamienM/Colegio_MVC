@@ -1,5 +1,6 @@
 package org.prueba.calificacionesh2.view;
 
+import jakarta.mail.MessagingException;
 import org.prueba.calificacionesh2.dto.AlumnoDTO;
 import org.prueba.calificacionesh2.exception.AlumnoNotFoundException;
 import org.prueba.calificacionesh2.service.AlumnoService;
@@ -7,6 +8,7 @@ import org.prueba.calificacionesh2.service.CalificacionesService;
 import org.prueba.calificacionesh2.service.EmailService;
 import org.prueba.calificacionesh2.excelManagement.UploadFileService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mail.MailAuthenticationException;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -41,8 +43,7 @@ public class AlumnoControllerAdmin {
     @PostMapping("/alumno/saveAlumno")
     public String saveAlumno(Model model, @ModelAttribute("AlumnoDTO") AlumnoDTO alumno) {
         model.addAttribute("AlumnoDTO", new AlumnoDTO());
-        var res = alumnoService.addAlumno(alumno);
-        model.addAttribute("msg", res.toString());
+        alumnoService.addAlumno(alumno);
         return "redirect:/alumno/alumnoMain";
     }
 
@@ -51,19 +52,18 @@ public class AlumnoControllerAdmin {
         try {
             model.addAttribute("AlumnoDTO", alumnoService.getAlumnoById(id));
         } catch (AlumnoNotFoundException e) {
-
+            System.err.println("No se ha encontrado el alumno");
         }
 
         return "/alumno/updateAlumno";
     }
 
     @PostMapping("/alumno/updateAlumno/{id}")
-    public String updateAlumno(Model model, @ModelAttribute("AlumnoDTO") AlumnoDTO alumno, @PathVariable Integer id) {
+    public String updateAlumno(@ModelAttribute("AlumnoDTO") AlumnoDTO alumno, @PathVariable Integer id) {
         try {
-            var res = alumnoService.updateAlumno(id, alumno);
-            model.addAttribute("msg", res.toString());
+            alumnoService.updateAlumno(id, alumno);
         } catch (AlumnoNotFoundException e) {
-            model.addAttribute("msg", "El alumno con id " + id + " no existe");
+            System.err.println("No se ha encontrado el alumno");
         }
 
         return "redirect:/alumno/alumnoMain";
@@ -74,7 +74,7 @@ public class AlumnoControllerAdmin {
         try {
             alumnoService.deleteAlumno(id);
         } catch (AlumnoNotFoundException e) {
-
+            System.err.println("No se ha encontrado el alumno");
         }
         return "redirect:/alumno/alumnoMain";
     }
@@ -91,8 +91,12 @@ public class AlumnoControllerAdmin {
             try {
                 uploadFileService.uploadAlumno(file);
                 emailService.sendEmail("ruben.ramis@patterson.agency","Alumnos Datos","Ruben","Se han subido los datos correctamente","Ruben");
-            }catch (Exception e) {
-                e.printStackTrace();
+            }catch (MessagingException m){
+                System.err.println("No se ha podido mandar el email");
+            }catch (MailAuthenticationException m){
+                System.err.println("El usuario o contraseña para el envio de mails no esta configurado o son erroneos");
+            } catch (Exception e) {
+                System.err.println("No se ha podido subir el archivo");
             }
         }
         return "redirect:/alumno/alumnoMain";
