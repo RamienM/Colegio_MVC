@@ -2,9 +2,6 @@ package org.prueba.calificacionesh2.service;
 
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.prueba.calificacionesh2.dto.AlumnoDTO;
-import org.prueba.calificacionesh2.dto.AsignaturaDTO;
-import org.prueba.calificacionesh2.dto.ProfesorDTO;
 import org.prueba.calificacionesh2.entity.Alumno;
 import org.prueba.calificacionesh2.entity.Asignatura;
 import org.prueba.calificacionesh2.entity.Calificacion;
@@ -20,6 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.function.BiConsumer;
 
 @Service
 public class UploadFileService {
@@ -39,34 +37,15 @@ public class UploadFileService {
      * @param file  Archivo exel que debe contener la hoja "Alumnos"
      */
     public void uploadAlumno(MultipartFile file){
+        obtainAllDataFromASheet(file, "Alumnos",(row,indices)->{
+            Alumno alumno = new Alumno();
+            alumno.setNombre(getCellValue(row, indices, "Nombre"));
+            alumno.setApellido(getCellValue(row, indices, "Apellido"));
+            alumno.setCorreo(getCellValue(row, indices, "Correo"));
+            alumno.setTelefono(getCellValue(row, indices, "Telefono"));
 
-        try(InputStream is = file.getInputStream(); Workbook workbook = new XSSFWorkbook(is)) {
-            Sheet sheet = workbook.getSheet("Alumnos");
-            if (sheet == null) {
-                throw new RuntimeException("La hoja 'Alumnos' no existe en el fichero");
-            }
-
-            Map<String, Integer> indices = new HashMap<>();
-            Row header = sheet.getRow(0);
-            header.forEach(cell -> indices.put(cell.getStringCellValue(),cell.getColumnIndex()));
-
-            Alumno alumno;
-            Row row;
-            for (int i = 1; i <= sheet.getLastRowNum(); i++) {
-                row = sheet.getRow(i);
-                if (row == null) continue;
-                alumno = new Alumno();
-                alumno.setNombre(getCellValue(row,indices,"Nombre"));
-                alumno.setApellido(getCellValue(row,indices,"Apellido"));
-                alumno.setCorreo(getCellValue(row,indices,"Correo"));
-                alumno.setTelefono(getCellValue(row,indices,"Telefono"));
-
-                alumnoRepository.save(alumno);
-            }
-
-        }catch (Exception e){
-            System.err.println("Error en la lectura del archivo");
-        }
+            alumnoRepository.save(alumno);
+        });
     }
 
     /**
@@ -74,34 +53,15 @@ public class UploadFileService {
      * @param file  Archivo exel que debe contener la hoja "Profesores"
      */
     public void uploadProfesor(MultipartFile file){
+        obtainAllDataFromASheet(file, "Profesores", (row, indices) -> {
+            Profesor profesor = new Profesor();
+            profesor.setNombre(getCellValue(row, indices, "Nombre"));
+            profesor.setApellido(getCellValue(row, indices, "Apellido"));
+            profesor.setCorreo(getCellValue(row, indices, "Correo"));
+            profesor.setTelefono(getCellValue(row, indices, "Telefono"));
 
-        try(InputStream is = file.getInputStream(); Workbook workbook = new XSSFWorkbook(is)) {
-            Sheet sheet = workbook.getSheet("Profesores");
-            if (sheet == null) {
-                throw new RuntimeException("La hoja 'Profesores' no existe en el fichero");
-            }
-
-            Map<String, Integer> indices = new HashMap<>();
-            Row header = sheet.getRow(0);
-            header.forEach(cell -> indices.put(cell.getStringCellValue(),cell.getColumnIndex()));
-
-            Profesor profesor;
-            Row row;
-            for (int i = 1; i <= sheet.getLastRowNum(); i++) {
-                row = sheet.getRow(i);
-                if (row == null) continue;
-                profesor = new Profesor();
-                profesor.setNombre(getCellValue(row,indices,"Nombre"));
-                profesor.setApellido(getCellValue(row,indices,"Apellido"));
-                profesor.setCorreo(getCellValue(row,indices,"Correo"));
-                profesor.setTelefono(getCellValue(row,indices,"Telefono"));
-
-                profesorRepository.save(profesor);
-            }
-
-        }catch (Exception e){
-            System.err.println("Error en la lectura del archivo");
-        }
+            profesorRepository.save(profesor);
+        });
     }
 
     /**
@@ -110,99 +70,59 @@ public class UploadFileService {
      * @param file  Archivo exel que debe contener la hoja "Asignaturas" y en caso de ser necesario "Profesores"
      */
     public void uploadAsignatura(MultipartFile file){
+        obtainAllDataFromASheet(file, "Asignaturas", (row, indices) -> {
+            Asignatura asignatura = new Asignatura();
+            asignatura.setName(getCellValue(row,indices,"NombreAsignatura"));
 
-        try(InputStream is = file.getInputStream(); Workbook workbook = new XSSFWorkbook(is)) {
-            Sheet sheet = workbook.getSheet("Asignaturas");
-            if (sheet == null) {
-                throw new RuntimeException("La hoja 'Asignaturas' no existe en el fichero");
-            }
+            var nombreProfesor = getCellValue(row,indices,"NombreProfesor");
+            var profesor = profesorRepository.findByNombre(nombreProfesor);
 
-            Map<String, Integer> indices = new HashMap<>();
-            Row header = sheet.getRow(0);
-            header.forEach(cell -> indices.put(cell.getStringCellValue(),cell.getColumnIndex()));
+            if (profesor.isPresent()){
+                asignatura.setIdProfesor(profesor.get());
+            }else {
+                //Si no existe el profesor lo añade
+                List<Row> datosProfesor = findDatosByColunm("Profesores","Nombre",nombreProfesor,file);
+                if (datosProfesor.size() == 2){
+                    Map<String, Integer> indicesP = new HashMap<>();
+                    datosProfesor.get(0).forEach(cell -> indicesP.put(cell.getStringCellValue(),cell.getColumnIndex()));
 
-            Asignatura asignatura;
-            Row row;
-            for (int i = 1; i <= sheet.getLastRowNum(); i++) {
-                row = sheet.getRow(i);
-                if (row == null) continue;
+                    var prof = new Profesor();
+                    prof.setNombre(getCellValue(datosProfesor.get(1),indicesP,"Nombre"));
+                    prof.setApellido(getCellValue(datosProfesor.get(1),indicesP,"Apellido"));
+                    prof.setCorreo(getCellValue(datosProfesor.get(1),indicesP,"Correo"));
+                    prof.setTelefono(getCellValue(datosProfesor.get(1),indicesP,"Telefono"));
 
-                asignatura = new Asignatura();
-                asignatura.setName(getCellValue(row,indices,"NombreAsignatura"));
-
-                var nombreProfesor = getCellValue(row,indices,"NombreProfesor");
-                var profesor = profesorRepository.findByNombre(nombreProfesor);
-
-                if (profesor.isPresent()){
-                    asignatura.setIdProfesor(profesor.get());
-                }else {
-                    //Si no existe el profesor lo añade
-                    List<Row> datosProfesor = findDatosByColunm("Profesores","Nombre",nombreProfesor,file);
-                    if (datosProfesor.size() == 2){
-                        Map<String, Integer> indicesP = new HashMap<>();
-                        datosProfesor.get(0).forEach(cell -> indicesP.put(cell.getStringCellValue(),cell.getColumnIndex()));
-
-                        var prof = new Profesor();
-                        prof.setNombre(getCellValue(datosProfesor.get(1),indicesP,"Nombre"));
-                        prof.setApellido(getCellValue(datosProfesor.get(1),indicesP,"Apellido"));
-                        prof.setCorreo(getCellValue(datosProfesor.get(1),indicesP,"Correo"));
-                        prof.setTelefono(getCellValue(datosProfesor.get(1),indicesP,"Telefono"));
-
-                        prof = profesorRepository.save(prof);
-                        asignatura.setIdProfesor(prof);
-                    }else{
-                        throw new RuntimeException("No se ha encontrado el profesor");
-                    }
-
+                    prof = profesorRepository.save(prof);
+                    asignatura.setIdProfesor(prof);
+                }else{
+                    throw new RuntimeException("No se ha encontrado el profesor");
                 }
-                asignaturasRepository.save(asignatura);
             }
-        } catch (Exception e){
-            System.err.println("Error en la lectura del archivo");
-        }
+            asignaturasRepository.save(asignatura);
+        });
     }
 
 
     public void uploadCalificaciones(MultipartFile file){
+        obtainAllDataFromASheet(file, "Calificaciones", (row, indices) -> {
+            Calificacion calificacion = new Calificacion();
+            calificacion.setMark(Float.parseFloat(getCellValue(row,indices,"Nota")));
 
-        try(InputStream is = file.getInputStream(); Workbook workbook = new XSSFWorkbook(is)) {
-            Sheet sheet = workbook.getSheet("Calificaciones");
-            if (sheet == null) {
-                throw new RuntimeException("La hoja 'Calificaciones' no existe en el fichero");
+            var asig = asignaturasRepository.findByName(getCellValue(row,indices,"NombreAsignatura"));
+            if (asig.isPresent()){
+                calificacion.setIdAsignatura(asig.get());
+            }else{
+                throw new RuntimeException("La asignatura no existe en el fichero");
+            }
+            var alum = alumnoRepository.findByNombre(getCellValue(row,indices,"NombreAlumno"));
+            if (alum.isPresent()){
+                calificacion.setIdAlumno(alum.get());
+            }else {
+                throw new RuntimeException("El alumno no existe en el fichero");
             }
 
-            Map<String, Integer> indices = new HashMap<>();
-            Row header = sheet.getRow(0);
-            header.forEach(cell -> indices.put(cell.getStringCellValue(),cell.getColumnIndex()));
-
-            Calificacion calificacion;
-            Row row;
-            for (int i = 1; i <= sheet.getLastRowNum(); i++) {
-                row = sheet.getRow(i);
-                if (row == null) continue;
-
-                calificacion = new Calificacion();
-                calificacion.setMark(Float.parseFloat(getCellValue(row,indices,"Nota")));
-
-                var asig = asignaturasRepository.findByName(getCellValue(row,indices,"NombreAsignatura"));
-                if (asig.isPresent()){
-                    calificacion.setIdAsignatura(asig.get());
-                }else{
-                    throw new RuntimeException("La asignatura no existe en el fichero");
-                }
-                var alum = alumnoRepository.findByNombre(getCellValue(row,indices,"NombreAlumno"));
-                if (alum.isPresent()){
-                    calificacion.setIdAlumno(alum.get());
-                }else {
-                    throw new RuntimeException("El alumno no existe en el fichero");
-                }
-
-                calificacionesRepository.save(calificacion);
-            }
-
-        }catch (Exception e){
-            System.err.println("Error en la lectura del archivo");
-        }
+            calificacionesRepository.save(calificacion);
+        });
     }
 
     /**
@@ -271,4 +191,34 @@ public class UploadFileService {
         }
     }
 
+
+    /**
+     * Obtiene todos lo datos de una hoja de Excel
+     * @param file          Archivo excel
+     * @param sheetName     Nombre de la hoja que hay que leer
+     * @param entityMapper  Para el uso de expresiones lambda, se pide fila (Row) y indices (Map<Strig,Intger>)
+     */
+    private void obtainAllDataFromASheet(MultipartFile file, String sheetName, BiConsumer<Row, Map<String, Integer>> entityMapper) {
+        try (InputStream is = file.getInputStream(); Workbook workbook = new XSSFWorkbook(is)) {
+            Sheet sheet = workbook.getSheet(sheetName);
+            if (sheet == null) {
+                throw new RuntimeException("La hoja '" + sheetName + "' no existe en el fichero");
+            }
+
+            Map<String, Integer> indices = new HashMap<>();
+            Row header = sheet.getRow(0);
+            header.forEach(cell -> indices.put(cell.getStringCellValue(), cell.getColumnIndex()));
+
+            Row row;
+            for (int i = 1; i <= sheet.getLastRowNum(); i++) {
+                row = sheet.getRow(i);
+                if (row == null) continue;
+
+                entityMapper.accept(row, indices);
+            }
+
+        } catch (Exception e) {
+            System.err.println("Error en la lectura del archivo");
+        }
+    }
 }
