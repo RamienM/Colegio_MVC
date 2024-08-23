@@ -36,12 +36,11 @@ public class AsignatuaControllerAdmin {
     }
 
     @PostMapping("/asignatura/saveAsignatura")
-    public String saveAsignatua(Model model, @ModelAttribute("AsignaturaDTO") AsignaturaDTO asignatura){
+    public String saveAsignatua(@ModelAttribute("AsignaturaDTO") AsignaturaDTO asignatura){
         try {
-            var res = asignaturasService.addAsignatura(asignatura);
-            model.addAttribute("msg", res.toString());
+            asignaturasService.addAsignatura(asignatura);
         }catch (ProfesorNotFoundException e){
-            model.addAttribute("msg", "El profesor con ID: " + asignatura.getIdProfesor() + " no se ha podido encontrar");
+            System.err.println("No se ha encontrado el profesor");
         }
 
         return "redirect:/asignatura/asignaturaMain";
@@ -52,33 +51,31 @@ public class AsignatuaControllerAdmin {
             model.addAttribute("AsignaturaDTO", asignaturasService.getAsignaturaById(id));
             model.addAttribute("profesores", profesorService.getAllProfesores());
         }catch (AsignaturaNotFoundException e){
-
+            System.err.println("No se ha encontrado la asignatura");
         }
 
         return "/asignatura/updateAsignatura";
     }
 
     @PostMapping("/asignatura/updateAsignatura/{id}")
-    public String updateAsignatura(Model model, @ModelAttribute("AsignaturaDTO") AsignaturaDTO asignatura,@PathVariable Integer id){
+    public String updateAsignatura(@ModelAttribute("AsignaturaDTO") AsignaturaDTO asignatura,@PathVariable Integer id){
         try {
-            var res = asignaturasService.updateAsignatura(id,asignatura);
-            model.addAttribute("msg", res.toString());
+            asignaturasService.updateAsignatura(id,asignatura);
         }catch (AsignaturaNotFoundException e){
-            model.addAttribute("msg", "No se ha encontrado la asignatura con id: " + id);
+            System.err.println("No se ha encontrado la asignatura");
         }catch (ProfesorNotFoundException e){
-            model.addAttribute("msg", "El profesor con ID: " + asignatura.getIdProfesor() + " no se ha podido encontrar");
+            System.err.println("No se ha encontrado el profesor");
         }
 
         return "redirect:/asignatura/asignaturaMain";
     }
 
     @GetMapping("/asignatura/deleteAsignatura/{id}")
-    public String deleteAsignatura(Model model,@PathVariable Integer id){
+    public String deleteAsignatura(@PathVariable Integer id){
         try {
             asignaturasService.deleteAsignatura(id);
-            model.addAttribute("msg","Se ha borrado la asignatura con exito, id de la asignatura borrada: " +id);
         }catch (AsignaturaNotFoundException e){
-            model.addAttribute("msg", "La asignatura no se ha podido borrar, no se ha podido encontrar la asignatura con id: " + id);
+            System.err.println("No se ha encontrado la asignatura");
         }
         return "redirect:/asignatura/asignaturaMain";
     }
@@ -89,7 +86,7 @@ public class AsignatuaControllerAdmin {
             try {
                 uploadFileService.uploadAsignatura(file);
             }catch (Exception e) {
-                e.printStackTrace();
+                System.err.println("No se ha encontrado subir las asignaturas");
             }
         }
         return "redirect:/asignatura/asignaturaMain";

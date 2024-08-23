@@ -17,11 +17,10 @@ public class UsuarioService {
 
     public Usuario loadUserByUsername(String username) {
         Optional<Usuario> usuario = usuarioRepository.findByUsername(username);
-        if (usuario.isPresent()) return usuario.get();
-        return null;
+        return usuario.orElse(null);
     }
 
-    public Usuario registrarUsuario(UsuarioRegisterDTO usuario) {
+    public void registrarUsuario(UsuarioRegisterDTO usuario) {
         Usuario user = new Usuario();
         user.setNombre(usuario.getNombre());
         user.setApellido(usuario.getApellido());
@@ -30,6 +29,6 @@ public class UsuarioService {
         user.setUsername(usuario.getUsername());
         user.setPassword(usuario.getPassword());
         user.setRol(usuario.getRol());
-        return usuarioRepository.save(user);
+        usuarioRepository.save(user);
     }
 }

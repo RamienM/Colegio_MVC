@@ -41,14 +41,13 @@ public class CalificacionControllerAdmin {
     }
 
     @PostMapping("/calificacion/saveCalificacion")
-    public String saveCalificacion(Model model, @ModelAttribute("CalificacionDTO") CalificacionDTO calificacion){
+    public String saveCalificacion(@ModelAttribute("CalificacionDTO") CalificacionDTO calificacion){
         try {
-            var res = calificacionService.addCalificaciones(calificacion);
-            model.addAttribute("msg", res.toString());
+            calificacionService.addCalificaciones(calificacion);
         }catch (AsignaturaNotFoundException e){
-            model.addAttribute("msg","No se ha encontrado la asignatura con id "+ calificacion.getIdAsignatura());
+            System.err.println("No se ha encontrado la asignatura");
         }catch (AlumnoNotFoundException e){
-            model.addAttribute("msg","No se ha podido encontrar el alumno con id " + calificacion.getIdAlumno());
+            System.err.println("No se ha encontrado el alumno");
         }
         return "redirect:/calificacion/calificacionMain";
     }
@@ -60,33 +59,31 @@ public class CalificacionControllerAdmin {
             model.addAttribute("alumnos", alumnoService.getAllAlumnos());
             model.addAttribute("asignaturas", asignaturasService.getAllAsignaturas());
         }catch (CalificacionNotFoundException e){
-
+            System.err.println("No se ha encontrado la calificacion");
         }
         return "/calificacion/updateCalificacion";
     }
 
     @PostMapping("/calificacion/updateCalificacion/{id}")
-    public String updateCalificacion(Model model, @ModelAttribute("CalificacionDTO") CalificacionDTO calificacion, @PathVariable Integer id){
+    public String updateCalificacion(@ModelAttribute("CalificacionDTO") CalificacionDTO calificacion, @PathVariable Integer id){
         try {
-            var res = calificacionService.updateCalificaciones(id,calificacion);
-            model.addAttribute("msg", res.toString());
+            calificacionService.updateCalificaciones(id,calificacion);
         }catch (CalificacionNotFoundException e){
-            model.addAttribute("msg", "La calificacion con id "+id+ " no existe");
+            System.err.println("No se ha encontrado la calificacion");
         }catch (AsignaturaNotFoundException e){
-            model.addAttribute("msg","No se ha encontrado la asignatura con id "+ calificacion.getIdAsignatura());
+            System.err.println("No se ha encontrado la asignatura");
         }catch (AlumnoNotFoundException e){
-            model.addAttribute("msg","No se ha podido encontrar el alumno con id " + calificacion.getIdAlumno());
+            System.err.println("No se ha encontrado el alumno");
         }
         return "redirect:/calificacion/calificacionMain";
     }
 
     @GetMapping("/calificacion/deleteCalificacion/{id}")
-    public String deleteCalificacion(Model model, @PathVariable Integer id){
+    public String deleteCalificacion(@PathVariable Integer id){
         try {
             calificacionService.deleteCalificaciones(id);
-            model.addAttribute("msg", "Calificacion eliminada con id "+id);
         }catch (CalificacionNotFoundException e){
-            model.addAttribute("msg", "La calificacion con id "+id+ " no existe");
+            System.err.println("No se ha encontrado la calificacion");
         }
         return "redirect:/calificacion/calificacionMain";
     }
@@ -97,7 +94,7 @@ public class CalificacionControllerAdmin {
             try {
                 uploadFileService.uploadCalificaciones(file);
             }catch (Exception e) {
-                e.printStackTrace();
+                System.err.println("No se ha podido subir las calificaciones");
             }
         }
         return "redirect:/calificacion/calificacionMain";

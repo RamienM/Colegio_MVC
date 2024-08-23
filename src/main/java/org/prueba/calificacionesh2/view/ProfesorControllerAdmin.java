@@ -35,8 +35,7 @@ public class ProfesorControllerAdmin {
     @PostMapping("/profesor/saveProfesor")
     public String saveProfesor(Model model,@ModelAttribute("ProfesorDTO") ProfesorDTO profesor){
         model.addAttribute("ProfesorDTO", new ProfesorDTO());
-        var res = profesorService.addProfesor(profesor);
-        model.addAttribute("msg",res.toString());
+        profesorService.addProfesor(profesor);
         return "redirect:/profesor/profesorMain";
     }
 
@@ -45,7 +44,7 @@ public class ProfesorControllerAdmin {
         try {
             model.addAttribute("ProfesorDTO", profesorService.getProfesorById(id));
         }catch (ProfesorNotFoundException e){
-
+            System.err.println("No se ha encontrado el profesor");
         }
         return "/profesor/updateProfesor";
     }
@@ -56,18 +55,17 @@ public class ProfesorControllerAdmin {
             var res = profesorService.updateProfesor(id,profesor);
             model.addAttribute("msg",res.toString());
         }catch (ProfesorNotFoundException e){
-            model.addAttribute("msg","El profesor con id "+id+" no existe");
+            System.err.println("No se ha encontrado el profesor");
         }
         return "redirect:/profesor/profesorMain";
     }
 
     @GetMapping("profesor/deleteProfesor/{id}")
-    public String deleteProfesor(Model model,@PathVariable("id") Integer id){
+    public String deleteProfesor(@PathVariable("id") Integer id){
         try {
             profesorService.deleteProfesor(id);
-            model.addAttribute("msg","El profesor con id " + id + " ha sido eliminado");
         }catch (ProfesorNotFoundException e){
-            model.addAttribute("msg","El profesor con id " + id + " no existe");
+            System.err.println("No se ha encontrado el profesor");
         }
         return "redirect:/profesor/profesorMain";
     }
@@ -84,7 +82,7 @@ public class ProfesorControllerAdmin {
             try {
                 uploadFileService.uploadProfesor(file);
             }catch (Exception e) {
-                e.printStackTrace();
+                System.err.println("No se ha podido subir el profesor");
             }
         }
         return "redirect:/profesor/profesorMain";

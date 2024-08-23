@@ -1,9 +1,11 @@
 package org.prueba.calificacionesh2.entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
+@Setter
+@Getter
 @MappedSuperclass
 public abstract class Persona {
     @Id
