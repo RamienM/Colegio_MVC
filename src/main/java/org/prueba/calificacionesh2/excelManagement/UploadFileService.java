@@ -37,13 +37,15 @@ public class UploadFileService {
      */
     public void uploadAlumno(MultipartFile file){
         obtainAllDataFromASheet(file, "Alumnos",(row,indices)->{
-            Alumno alumno = new Alumno();
-            alumno.setNombre(ObtainCellData.getStringData(row,indices.get("Nombre")));
-            alumno.setApellido(ObtainCellData.getStringData(row,indices.get("Apellido")));
-            alumno.setCorreo(ObtainCellData.getStringData(row,indices.get("Correo")));
-            alumno.setTelefono(ObtainCellData.getStringData(row,indices.get("Telefono")));
-
-            alumnoRepository.save(alumno);
+            if (!alumnoRepository.existsByNombreAndCorreo(ObtainCellData.getStringData(row,indices.get("Nombre")),
+                    ObtainCellData.getStringData(row,indices.get("Correo")))){
+                Alumno alumno = new Alumno();
+                alumno.setNombre(ObtainCellData.getStringData(row,indices.get("Nombre")));
+                alumno.setApellido(ObtainCellData.getStringData(row,indices.get("Apellido")));
+                alumno.setCorreo(ObtainCellData.getStringData(row,indices.get("Correo")));
+                alumno.setTelefono(ObtainCellData.getStringData(row,indices.get("Telefono")));
+                alumnoRepository.save(alumno);
+            }
         });
     }
 
@@ -53,13 +55,16 @@ public class UploadFileService {
      */
     public void uploadProfesor(MultipartFile file){
         obtainAllDataFromASheet(file, "Profesores", (row, indices) -> {
-            Profesor profesor = new Profesor();
-            profesor.setNombre(ObtainCellData.getStringData(row,indices.get("Nombre")));
-            profesor.setApellido(ObtainCellData.getStringData(row,indices.get("Apellido")));
-            profesor.setCorreo(ObtainCellData.getStringData(row,indices.get("Correo")));
-            profesor.setTelefono(ObtainCellData.getStringData(row,indices.get("Telefono")));
+            if (!profesorRepository.existsByNombreAndCorreo(ObtainCellData.getStringData(row,indices.get("Nombre")),
+                    ObtainCellData.getStringData(row,indices.get("Correo")))) {
+                Profesor profesor = new Profesor();
+                profesor.setNombre(ObtainCellData.getStringData(row, indices.get("Nombre")));
+                profesor.setApellido(ObtainCellData.getStringData(row, indices.get("Apellido")));
+                profesor.setCorreo(ObtainCellData.getStringData(row, indices.get("Correo")));
+                profesor.setTelefono(ObtainCellData.getStringData(row, indices.get("Telefono")));
 
-            profesorRepository.save(profesor);
+                profesorRepository.save(profesor);
+            }
         });
     }
 
@@ -70,35 +75,37 @@ public class UploadFileService {
      */
     public void uploadAsignatura(MultipartFile file){
         obtainAllDataFromASheet(file, "Asignaturas", (row, indices) -> {
-            Asignatura asignatura = new Asignatura();
-            asignatura.setName(ObtainCellData.getStringData(row,indices.get("NombreAsignatura")));
+            if (!asignaturasRepository.existsByName(ObtainCellData.getStringData(row,indices.get("NombreAsignatura")))){
+                Asignatura asignatura = new Asignatura();
+                asignatura.setName(ObtainCellData.getStringData(row,indices.get("NombreAsignatura")));
 
-            var nombreProfesor = ObtainCellData.getStringData(row,indices.get("NombreProfesor"));
-            var profesor = profesorRepository.findByNombre(nombreProfesor);
+                var nombreProfesor = ObtainCellData.getStringData(row,indices.get("NombreProfesor"));
+                var profesor = profesorRepository.findByNombre(nombreProfesor);
 
-            if (profesor.isPresent()){
-                asignatura.setIdProfesor(profesor.get());
-            }else {
-                obtainAllDataFromASheet(file,"Profesores", (rowP,indicesP) -> {
-                    if (nombreProfesor.equals(ObtainCellData.getStringData(rowP,indicesP.get("Nombre")))) {
-                        Profesor prof = new Profesor();
-                        prof.setNombre(ObtainCellData.getStringData(rowP,indicesP.get("Nombre")));
-                        prof.setApellido(ObtainCellData.getStringData(rowP,indicesP.get("Apellido")));
-                        prof.setCorreo(ObtainCellData.getStringData(rowP,indicesP.get("Correo")));
-                        prof.setTelefono(ObtainCellData.getStringData(rowP,indicesP.get("Telefono")));
-
-                        profesorRepository.save(prof);
-                    }
-                });
-
-                profesor = profesorRepository.findByNombre(nombreProfesor);
-                if (profesor.isPresent()) {
+                if (profesor.isPresent()){
                     asignatura.setIdProfesor(profesor.get());
                 }else {
-                    throw new RuntimeException("No existe un profesor con ese nombre");
+                    obtainAllDataFromASheet(file,"Profesores", (rowP,indicesP) -> {
+                        if (nombreProfesor.equals(ObtainCellData.getStringData(rowP,indicesP.get("Nombre")))) {
+                            Profesor prof = new Profesor();
+                            prof.setNombre(ObtainCellData.getStringData(rowP,indicesP.get("Nombre")));
+                            prof.setApellido(ObtainCellData.getStringData(rowP,indicesP.get("Apellido")));
+                            prof.setCorreo(ObtainCellData.getStringData(rowP,indicesP.get("Correo")));
+                            prof.setTelefono(ObtainCellData.getStringData(rowP,indicesP.get("Telefono")));
+
+                            profesorRepository.save(prof);
+                        }
+                    });
+
+                    profesor = profesorRepository.findByNombre(nombreProfesor);
+                    if (profesor.isPresent()) {
+                        asignatura.setIdProfesor(profesor.get());
+                    }else {
+                        throw new RuntimeException("No existe un profesor con ese nombre");
+                    }
                 }
+                asignaturasRepository.save(asignatura);
             }
-            asignaturasRepository.save(asignatura);
         });
     }
 
@@ -111,7 +118,6 @@ public class UploadFileService {
         obtainAllDataFromASheet(file, "Calificaciones", (row, indices) -> {
             Calificacion calificacion = new Calificacion();
             calificacion.setMark(ObtainCellData.getFloatData(row,indices.get("Nota")));
-
             String nombreAsignatura = ObtainCellData.getStringData(row,indices.get("NombreAsignatura"));
             var asig = asignaturasRepository.findByName(nombreAsignatura);
             if (asig.isPresent()){
@@ -181,7 +187,10 @@ public class UploadFileService {
                 }
             }
 
-            calificacionesRepository.save(calificacion);
+            if (! calificacionesRepository.existsByIdAlumnoAndIdAsignatura(calificacion.getIdAlumno(),
+                    calificacion.getIdAsignatura())){
+                calificacionesRepository.save(calificacion);
+            }
         });
     }
 

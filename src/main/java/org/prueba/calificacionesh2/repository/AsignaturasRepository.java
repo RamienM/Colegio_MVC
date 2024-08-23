@@ -7,4 +7,5 @@ import java.util.Optional;
 
 public interface AsignaturasRepository extends JpaRepository<Asignatura, Integer> {
     Optional<Asignatura> findByName(String nombre);
+    Boolean existsByName(String nombre);
 }
