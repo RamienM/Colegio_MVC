@@ -1,4 +1,4 @@
-package org.prueba.calificacionesh2.service;
+package org.prueba.calificacionesh2.excelManagement;
 
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -15,7 +15,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.InputStream;
-import java.math.BigDecimal;
 import java.util.*;
 import java.util.function.BiConsumer;
 
@@ -39,10 +38,10 @@ public class UploadFileService {
     public void uploadAlumno(MultipartFile file){
         obtainAllDataFromASheet(file, "Alumnos",(row,indices)->{
             Alumno alumno = new Alumno();
-            alumno.setNombre(getCellValue(row, indices, "Nombre"));
-            alumno.setApellido(getCellValue(row, indices, "Apellido"));
-            alumno.setCorreo(getCellValue(row, indices, "Correo"));
-            alumno.setTelefono(getCellValue(row, indices, "Telefono"));
+            alumno.setNombre(ObtainCellData.getStringData(row,indices.get("Nombre")));
+            alumno.setApellido(ObtainCellData.getStringData(row,indices.get("Apellido")));
+            alumno.setCorreo(ObtainCellData.getStringData(row,indices.get("Correo")));
+            alumno.setTelefono(ObtainCellData.getStringData(row,indices.get("Telefono")));
 
             alumnoRepository.save(alumno);
         });
@@ -55,10 +54,10 @@ public class UploadFileService {
     public void uploadProfesor(MultipartFile file){
         obtainAllDataFromASheet(file, "Profesores", (row, indices) -> {
             Profesor profesor = new Profesor();
-            profesor.setNombre(getCellValue(row, indices, "Nombre"));
-            profesor.setApellido(getCellValue(row, indices, "Apellido"));
-            profesor.setCorreo(getCellValue(row, indices, "Correo"));
-            profesor.setTelefono(getCellValue(row, indices, "Telefono"));
+            profesor.setNombre(ObtainCellData.getStringData(row,indices.get("Nombre")));
+            profesor.setApellido(ObtainCellData.getStringData(row,indices.get("Apellido")));
+            profesor.setCorreo(ObtainCellData.getStringData(row,indices.get("Correo")));
+            profesor.setTelefono(ObtainCellData.getStringData(row,indices.get("Telefono")));
 
             profesorRepository.save(profesor);
         });
@@ -72,21 +71,21 @@ public class UploadFileService {
     public void uploadAsignatura(MultipartFile file){
         obtainAllDataFromASheet(file, "Asignaturas", (row, indices) -> {
             Asignatura asignatura = new Asignatura();
-            asignatura.setName(getCellValue(row,indices,"NombreAsignatura"));
+            asignatura.setName(ObtainCellData.getStringData(row,indices.get("NombreAsignatura")));
 
-            var nombreProfesor = getCellValue(row,indices,"NombreProfesor");
+            var nombreProfesor = ObtainCellData.getStringData(row,indices.get("NombreProfesor"));
             var profesor = profesorRepository.findByNombre(nombreProfesor);
 
             if (profesor.isPresent()){
                 asignatura.setIdProfesor(profesor.get());
             }else {
                 obtainAllDataFromASheet(file,"Profesores", (rowP,indicesP) -> {
-                    if (nombreProfesor.equals(getCellValue(rowP,indicesP,"Nombre"))) {
+                    if (nombreProfesor.equals(ObtainCellData.getStringData(rowP,indicesP.get("Nombre")))) {
                         Profesor prof = new Profesor();
-                        prof.setNombre(getCellValue(rowP,indicesP,"Nombre"));
-                        prof.setApellido(getCellValue(rowP,indicesP, "Apellido"));
-                        prof.setCorreo(getCellValue(rowP,indicesP, "Correo"));
-                        prof.setTelefono(getCellValue(rowP,indicesP, "Telefono"));
+                        prof.setNombre(ObtainCellData.getStringData(rowP,indicesP.get("Nombre")));
+                        prof.setApellido(ObtainCellData.getStringData(rowP,indicesP.get("Apellido")));
+                        prof.setCorreo(ObtainCellData.getStringData(rowP,indicesP.get("Correo")));
+                        prof.setTelefono(ObtainCellData.getStringData(rowP,indicesP.get("Telefono")));
 
                         profesorRepository.save(prof);
                     }
@@ -111,31 +110,31 @@ public class UploadFileService {
     public void uploadCalificaciones(MultipartFile file){
         obtainAllDataFromASheet(file, "Calificaciones", (row, indices) -> {
             Calificacion calificacion = new Calificacion();
-            calificacion.setMark(Float.parseFloat(getCellValue(row,indices,"Nota")));
+            calificacion.setMark(ObtainCellData.getFloatData(row,indices.get("Nota")));
 
-            String nombreAsignatura = getCellValue(row,indices,"NombreAsignatura");
+            String nombreAsignatura = ObtainCellData.getStringData(row,indices.get("NombreAsignatura"));
             var asig = asignaturasRepository.findByName(nombreAsignatura);
             if (asig.isPresent()){
                 calificacion.setIdAsignatura(asig.get());
             }else{
                 obtainAllDataFromASheet(file, "Asignaturas", (rowA, indicesA) -> {
-                    if (nombreAsignatura.equals(getCellValue(rowA,indicesA,"NombreAsignatura"))) {
+                    if (nombreAsignatura.equals(ObtainCellData.getStringData(rowA,indicesA.get("NombreAsignatura")))) {
                         Asignatura asignatura = new Asignatura();
-                        asignatura.setName(getCellValue(rowA,indicesA,"NombreAsignatura"));
+                        asignatura.setName(ObtainCellData.getStringData(rowA,indicesA.get("NombreAsignatura")));
 
-                        var nombreProfesor = getCellValue(rowA,indicesA,"NombreProfesor");
+                        var nombreProfesor = ObtainCellData.getStringData(rowA,indicesA.get("NombreProfesor"));
                         var profesor = profesorRepository.findByNombre(nombreProfesor);
 
                         if (profesor.isPresent()){
                             asignatura.setIdProfesor(profesor.get());
                         }else {
                             obtainAllDataFromASheet(file,"Profesores", (rowP,indicesP) -> {
-                                if (nombreProfesor.equals(getCellValue(rowP,indicesP,"Nombre"))) {
+                                if (nombreProfesor.equals(ObtainCellData.getStringData(rowP,indicesP.get("Nombre")))) {
                                     Profesor prof = new Profesor();
-                                    prof.setNombre(getCellValue(rowP,indicesP,"Nombre"));
-                                    prof.setApellido(getCellValue(rowP,indicesP, "Apellido"));
-                                    prof.setCorreo(getCellValue(rowP,indicesP, "Correo"));
-                                    prof.setTelefono(getCellValue(rowP,indicesP, "Telefono"));
+                                    prof.setNombre(ObtainCellData.getStringData(rowP,indicesP.get("Nombre")));
+                                    prof.setApellido(ObtainCellData.getStringData(rowP,indicesP.get("Apellido")));
+                                    prof.setCorreo(ObtainCellData.getStringData(rowP,indicesP.get("Correo")));
+                                    prof.setTelefono(ObtainCellData.getStringData(rowP,indicesP.get("Telefono")));
 
                                     profesorRepository.save(prof);
                                 }
@@ -158,18 +157,18 @@ public class UploadFileService {
                     throw new RuntimeException("No existe un asignatura con ese nombre");
                 }
             }
-            String nombreAlumno = getCellValue(row,indices,"NombreAlumno");
+            String nombreAlumno = ObtainCellData.getStringData(row,indices.get("NombreAlumno"));
             var alum = alumnoRepository.findByNombre(nombreAlumno);
             if (alum.isPresent()){
                 calificacion.setIdAlumno(alum.get());
             }else {
                 obtainAllDataFromASheet(file,"Alumnos", (rowA,indicesA) -> {
-                    if (nombreAlumno.equals(getCellValue(rowA,indicesA,"Nombre"))) {
+                    if (nombreAlumno.equals(ObtainCellData.getStringData(rowA,indicesA.get("Nombre")))) {
                         Alumno alumno = new Alumno();
-                        alumno.setNombre(getCellValue(rowA,indicesA,"Nombre"));
-                        alumno.setApellido(getCellValue(rowA,indicesA, "Apellido"));
-                        alumno.setCorreo(getCellValue(rowA,indicesA, "Correo"));
-                        alumno.setTelefono(getCellValue(rowA,indicesA, "Telefono"));
+                        alumno.setNombre(ObtainCellData.getStringData(rowA,indicesA.get("Nombre")));
+                        alumno.setApellido(ObtainCellData.getStringData(rowA,indicesA.get("Apellido")));
+                        alumno.setCorreo(ObtainCellData.getStringData(rowA,indicesA.get("Correo")));
+                        alumno.setTelefono(ObtainCellData.getStringData(rowA,indicesA.get("Telefono")));
 
                         alumnoRepository.save(alumno);
                     }
@@ -184,38 +183,6 @@ public class UploadFileService {
 
             calificacionesRepository.save(calificacion);
         });
-    }
-
-    private String getCellValue(Row row, Map<String, Integer> columnIndices, String columnName) {
-        Integer columnIndex = columnIndices.get(columnName);
-        if (columnIndex == null) {
-            throw new RuntimeException("Columna '" + columnName + "' no encontrada.");
-        }
-        Cell cell = row.getCell(columnIndex);
-
-        if (cell == null) {
-            return null;
-        }
-
-        switch (cell.getCellType()) {
-            case STRING:
-                return cell.getStringCellValue();
-            case NUMERIC:
-                // Verificamos si es un número entero (teléfono) o una fecha
-                if (DateUtil.isCellDateFormatted(cell)) {
-                    return cell.getDateCellValue().toString();
-                } else {
-                    // Convertir el valor numérico a un string sin notación científica
-                    return BigDecimal.valueOf(cell.getNumericCellValue())
-                            .toPlainString();
-                }
-            case BOOLEAN:
-                return Boolean.toString(cell.getBooleanCellValue());
-            case FORMULA:
-                return cell.getCellFormula();
-            default:
-                return "";
-        }
     }
 
 

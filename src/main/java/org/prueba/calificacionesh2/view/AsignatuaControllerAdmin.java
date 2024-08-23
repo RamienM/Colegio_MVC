@@ -5,7 +5,7 @@ import org.prueba.calificacionesh2.exception.AsignaturaNotFoundException;
 import org.prueba.calificacionesh2.exception.ProfesorNotFoundException;
 import org.prueba.calificacionesh2.service.AsignaturasService;
 import org.prueba.calificacionesh2.service.ProfesorService;
-import org.prueba.calificacionesh2.service.UploadFileService;
+import org.prueba.calificacionesh2.excelManagement.UploadFileService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
