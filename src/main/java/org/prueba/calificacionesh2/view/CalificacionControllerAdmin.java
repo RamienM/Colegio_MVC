@@ -7,10 +7,12 @@ import org.prueba.calificacionesh2.exception.CalificacionNotFoundException;
 import org.prueba.calificacionesh2.service.AlumnoService;
 import org.prueba.calificacionesh2.service.AsignaturasService;
 import org.prueba.calificacionesh2.service.CalificacionesService;
+import org.prueba.calificacionesh2.excelManagement.UploadFileService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @Controller
 public class CalificacionControllerAdmin {
@@ -21,6 +23,8 @@ public class CalificacionControllerAdmin {
     private AsignaturasService asignaturasService;
     @Autowired
     private AlumnoService alumnoService;
+    @Autowired
+    private UploadFileService uploadFileService;
 
     @GetMapping("/calificacion/calificacionMain")
     public String viewAdminView(Model model){
@@ -83,6 +87,18 @@ public class CalificacionControllerAdmin {
             model.addAttribute("msg", "Calificacion eliminada con id "+id);
         }catch (CalificacionNotFoundException e){
             model.addAttribute("msg", "La calificacion con id "+id+ " no existe");
+        }
+        return "redirect:/calificacion/calificacionMain";
+    }
+
+    @PostMapping("/calificacion/upload")
+    public String upload(@RequestParam("file") MultipartFile file) {
+        if (!file.isEmpty()) {
+            try {
+                uploadFileService.uploadCalificaciones(file);
+            }catch (Exception e) {
+                e.printStackTrace();
+            }
         }
         return "redirect:/calificacion/calificacionMain";
     }

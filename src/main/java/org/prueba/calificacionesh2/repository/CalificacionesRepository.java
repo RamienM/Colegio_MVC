@@ -1,5 +1,7 @@
 package org.prueba.calificacionesh2.repository;
 
+import org.prueba.calificacionesh2.entity.Alumno;
+import org.prueba.calificacionesh2.entity.Asignatura;
 import org.prueba.calificacionesh2.entity.Calificacion;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -19,4 +21,6 @@ public interface CalificacionesRepository extends JpaRepository<Calificacion,Int
 
     @Query(value = "select u from Calificacion u where u.idAlumno.id = ?1")
     List<Calificacion> findCalificacionByAlumnoId(Integer id_alumno);
+
+    Boolean existsByIdAlumnoAndIdAsignatura(Alumno alumno, Asignatura asignatura);
 }
