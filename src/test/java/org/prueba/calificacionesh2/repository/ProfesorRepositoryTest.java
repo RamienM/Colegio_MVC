@@ -2,7 +2,8 @@ package org.prueba.calificacionesh2.repository;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.prueba.calificacionesh2.entity.Profesor;
+import org.prueba.calificacionesh2.persistence.entity.Profesor;
+import org.prueba.calificacionesh2.persistence.repository.ProfesorRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.Rollback;
