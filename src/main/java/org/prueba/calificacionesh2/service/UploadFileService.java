@@ -5,7 +5,10 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.prueba.calificacionesh2.dto.AlumnoDTO;
 import org.prueba.calificacionesh2.dto.AsignaturaDTO;
 import org.prueba.calificacionesh2.dto.ProfesorDTO;
+import org.prueba.calificacionesh2.entity.Alumno;
+import org.prueba.calificacionesh2.entity.Asignatura;
 import org.prueba.calificacionesh2.entity.Calificacion;
+import org.prueba.calificacionesh2.entity.Profesor;
 import org.prueba.calificacionesh2.repository.AlumnoRepository;
 import org.prueba.calificacionesh2.repository.AsignaturasRepository;
 import org.prueba.calificacionesh2.repository.CalificacionesRepository;
@@ -22,20 +25,19 @@ import java.util.*;
 public class UploadFileService {
 
     @Autowired
-    private AlumnoService alumnoService;
-    @Autowired
-    private ProfesorService profesorService;
+    private AlumnoRepository alumnoRepository;
     @Autowired
     private ProfesorRepository profesorRepository;
-    @Autowired
-    private AsignaturasService asignaturasService;
     @Autowired
     private CalificacionesRepository calificacionesRepository;
     @Autowired
     private AsignaturasRepository asignaturasRepository;
-    @Autowired
-    private AlumnoRepository alumnoRepository;
 
+
+    /**
+     * Permite añadir a la base de datos Alumnos a patir de un archivo Excel
+     * @param file  Archivo exel que debe contener la hoja "Alumnos"
+     */
     public void uploadAlumno(MultipartFile file){
 
         try(InputStream is = file.getInputStream(); Workbook workbook = new XSSFWorkbook(is)) {
@@ -48,25 +50,29 @@ public class UploadFileService {
             Row header = sheet.getRow(0);
             header.forEach(cell -> indices.put(cell.getStringCellValue(),cell.getColumnIndex()));
 
-            AlumnoDTO alumno;
+            Alumno alumno;
             Row row;
             for (int i = 1; i <= sheet.getLastRowNum(); i++) {
                 row = sheet.getRow(i);
                 if (row == null) continue;
-                alumno = new AlumnoDTO();
+                alumno = new Alumno();
                 alumno.setNombre(getCellValue(row,indices,"Nombre"));
                 alumno.setApellido(getCellValue(row,indices,"Apellido"));
                 alumno.setCorreo(getCellValue(row,indices,"Correo"));
                 alumno.setTelefono(getCellValue(row,indices,"Telefono"));
 
-                alumnoService.addAlumno(alumno);
+                alumnoRepository.save(alumno);
             }
 
         }catch (Exception e){
-            e.printStackTrace();
+            System.err.println("Error en la lectura del archivo");
         }
     }
 
+    /**
+     * Permite añadir a la base de datos Profesores a patir de un archivo Excel
+     * @param file  Archivo exel que debe contener la hoja "Profesores"
+     */
     public void uploadProfesor(MultipartFile file){
 
         try(InputStream is = file.getInputStream(); Workbook workbook = new XSSFWorkbook(is)) {
@@ -79,25 +85,30 @@ public class UploadFileService {
             Row header = sheet.getRow(0);
             header.forEach(cell -> indices.put(cell.getStringCellValue(),cell.getColumnIndex()));
 
-            ProfesorDTO profesor;
+            Profesor profesor;
             Row row;
             for (int i = 1; i <= sheet.getLastRowNum(); i++) {
                 row = sheet.getRow(i);
                 if (row == null) continue;
-                profesor = new ProfesorDTO();
+                profesor = new Profesor();
                 profesor.setNombre(getCellValue(row,indices,"Nombre"));
                 profesor.setApellido(getCellValue(row,indices,"Apellido"));
                 profesor.setCorreo(getCellValue(row,indices,"Correo"));
                 profesor.setTelefono(getCellValue(row,indices,"Telefono"));
 
-                profesorService.addProfesor(profesor);
+                profesorRepository.save(profesor);
             }
 
         }catch (Exception e){
-            e.printStackTrace();
+            System.err.println("Error en la lectura del archivo");
         }
     }
 
+    /**
+     * Permite añadir a la base de datos Asignaturas a patir de un archivo Excel, también añade los profesores
+     * que la imparten
+     * @param file  Archivo exel que debe contener la hoja "Asignaturas" y en caso de ser necesario "Profesores"
+     */
     public void uploadAsignatura(MultipartFile file){
 
         try(InputStream is = file.getInputStream(); Workbook workbook = new XSSFWorkbook(is)) {
@@ -110,41 +121,44 @@ public class UploadFileService {
             Row header = sheet.getRow(0);
             header.forEach(cell -> indices.put(cell.getStringCellValue(),cell.getColumnIndex()));
 
-            AsignaturaDTO asignatura;
+            Asignatura asignatura;
             Row row;
             for (int i = 1; i <= sheet.getLastRowNum(); i++) {
                 row = sheet.getRow(i);
                 if (row == null) continue;
-                asignatura = new AsignaturaDTO();
-                asignatura.setNombreAsignatura(getCellValue(row,indices,"NombreAsignatura"));
+
+                asignatura = new Asignatura();
+                asignatura.setName(getCellValue(row,indices,"NombreAsignatura"));
+
                 var nombreProfesor = getCellValue(row,indices,"NombreProfesor");
                 var profesor = profesorRepository.findByNombre(nombreProfesor);
+
                 if (profesor.isPresent()){
-                    asignatura.setIdProfesor(profesor.get().getId());
+                    asignatura.setIdProfesor(profesor.get());
                 }else {
-                   List<Row> datosProfesor = findDatos("Profesores","Nombre",nombreProfesor,file);
-                   if (datosProfesor.size() == 2){
-                       Map<String, Integer> indicesP = new HashMap<>();
-                       datosProfesor.get(0).forEach(cell -> indicesP.put(cell.getStringCellValue(),cell.getColumnIndex()));
+                    //Si no existe el profesor lo añade
+                    List<Row> datosProfesor = findDatosByColunm("Profesores","Nombre",nombreProfesor,file);
+                    if (datosProfesor.size() == 2){
+                        Map<String, Integer> indicesP = new HashMap<>();
+                        datosProfesor.get(0).forEach(cell -> indicesP.put(cell.getStringCellValue(),cell.getColumnIndex()));
 
-                       var prof = new ProfesorDTO();
-                       prof.setNombre(getCellValue(datosProfesor.get(1),indicesP,"Nombre"));
-                       prof.setApellido(getCellValue(datosProfesor.get(1),indicesP,"Apellido"));
-                       prof.setCorreo(getCellValue(datosProfesor.get(1),indicesP,"Correo"));
-                       prof.setTelefono(getCellValue(datosProfesor.get(1),indicesP,"Telefono"));
+                        var prof = new Profesor();
+                        prof.setNombre(getCellValue(datosProfesor.get(1),indicesP,"Nombre"));
+                        prof.setApellido(getCellValue(datosProfesor.get(1),indicesP,"Apellido"));
+                        prof.setCorreo(getCellValue(datosProfesor.get(1),indicesP,"Correo"));
+                        prof.setTelefono(getCellValue(datosProfesor.get(1),indicesP,"Telefono"));
 
-                       prof = profesorService.addProfesor(prof);
-
-                       asignatura.setIdProfesor(prof.getId());
-                   }else{
-                       throw new RuntimeException();
-                   }
+                        prof = profesorRepository.save(prof);
+                        asignatura.setIdProfesor(prof);
+                    }else{
+                        throw new RuntimeException("No se ha encontrado el profesor");
+                    }
 
                 }
-                asignaturasService.addAsignatura(asignatura);
+                asignaturasRepository.save(asignatura);
             }
         } catch (Exception e){
-            e.printStackTrace();
+            System.err.println("Error en la lectura del archivo");
         }
     }
 
@@ -166,8 +180,10 @@ public class UploadFileService {
             for (int i = 1; i <= sheet.getLastRowNum(); i++) {
                 row = sheet.getRow(i);
                 if (row == null) continue;
+
                 calificacion = new Calificacion();
                 calificacion.setMark(Float.parseFloat(getCellValue(row,indices,"Nota")));
+
                 var asig = asignaturasRepository.findByName(getCellValue(row,indices,"NombreAsignatura"));
                 if (asig.isPresent()){
                     calificacion.setIdAsignatura(asig.get());
@@ -185,13 +201,21 @@ public class UploadFileService {
             }
 
         }catch (Exception e){
-            e.printStackTrace();
+            System.err.println("Error en la lectura del archivo");
         }
     }
 
-    private List<Row> findDatos(String hoja, String nombreColumna, String datoAComparar, MultipartFile file){
+    /**
+     * Permite buscar, si existe, un dato en una columna especifica de una hoja concreta en un excel.
+     * @param hoja              Hoja donde de debe buscar la columna
+     * @param nombreColumna     Columna donde se espera encontrar el dato
+     * @param datoAComparar     Dato que deseamos buscar
+     * @param file              Fichero Excel
+     * @return  Devuelve un ArrayList que contiene tanto la fila de las columnas como la fila donde se ha encontrado el atributo
+     */
+    private List<Row> findDatosByColunm(String hoja, String nombreColumna, String datoAComparar, MultipartFile file){
+        ArrayList<Row> datos = new ArrayList<>();
         try(InputStream is = file.getInputStream(); Workbook workbook = new XSSFWorkbook(is)) {
-            List<Row> datos = new ArrayList<>();
             Sheet sheet = workbook.getSheet(hoja);
             if (sheet == null) {
                 throw new RuntimeException("La hoja " + hoja + " no existe en el fichero");
@@ -209,8 +233,10 @@ public class UploadFileService {
                     return datos;
                 }
             }
-        }catch (Exception e){}
-        return null;
+        }catch (Exception e){
+            System.err.println("Error en la lectura del fichero");
+        }
+        return datos;
     }
 
     private String getCellValue(Row row, Map<String, Integer> columnIndices, String columnName) {
